@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatUnixDate(unixSeconds: number | bigint, locale = "pt-BR") {
+export function formatUnixDate(unixSeconds: number | bigint, locale = "en-US") {
   const secs = typeof unixSeconds === "bigint" ? Number(unixSeconds) : unixSeconds;
   if (!secs) return "—";
   return new Date(secs * 1000).toLocaleString(locale, {
@@ -17,6 +17,6 @@ export function formatUnixDate(unixSeconds: number | bigint, locale = "pt-BR") {
   });
 }
 
-export function formatNumber(value: number | bigint, locale = "pt-BR") {
+export function formatNumber(value: number | bigint, locale = "en-US") {
   return new Intl.NumberFormat(locale).format(value);
 }
