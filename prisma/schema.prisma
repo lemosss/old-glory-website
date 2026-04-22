@@ -1,0 +1,939 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  // Vercel's serverless runtime is RHEL-compatible. Keep `native` so local
+  // dev on macOS/Windows/Linux also works without extra flags.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account_viplist {
+  account_id Int
+  world_id   Int      @default(0) @db.UnsignedTinyInt
+  player_id  Int
+  accounts   accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "account_viplist_ibfk_1")
+  players    players  @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "account_viplist_ibfk_2")
+
+  @@unique([account_id, player_id], map: "account_id_2")
+  @@index([account_id], map: "account_id")
+  @@index([player_id], map: "player_id")
+  @@index([world_id], map: "world_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model accounts {
+  id                 Int               @id @default(autoincrement())
+  name               String            @unique(map: "name") @default("") @db.VarChar(32)
+  email              String            @default("") @db.VarChar(255)
+  premium_points     Int               @default(0)
+  backup_points      Int               @default(0)
+  guild_points       Int               @default(0)
+  guild_points_stats Int               @default(0)
+  password           String            @db.VarChar(255)
+  salt               String            @default("") @db.VarChar(40)
+  premdays           Int               @default(0)
+  lastday            Int               @default(0) @db.UnsignedInt
+  key                String            @default("0") @db.VarChar(20)
+  blocked            Boolean           @default(false)
+  warnings           Int               @default(0)
+  group_id           Int               @default(1)
+  vip_time           Int               @default(0)
+  email_new          String            @db.VarChar(255)
+  email_new_time     Int
+  email_code         String            @default("0") @db.VarChar(255)
+  next_email         Int               @default(0)
+  created            Int
+  page_lastday       Int
+  page_access        Int               @default(0)
+  rlname             String            @db.VarChar(255)
+  location           String            @db.VarChar(255)
+  flag               String            @db.VarChar(255)
+  last_post          Int               @default(0)
+  create_date        Int               @default(0)
+  create_ip          Int               @default(0)
+  vote               Int
+  account_viplist    account_viplist[]
+}
+
+model announcements {
+  id      Int     @id @default(autoincrement())
+  title   String? @db.VarChar(255)
+  message String? @db.Text
+  date    BigInt? @default(0) @db.UnsignedBigInt
+  author  String? @default("") @db.VarChar(100)
+  type    Int?    @default(0) @db.TinyInt
+}
+
+model auction_system {
+  id        Int     @id @default(autoincrement())
+  player    Int?
+  item_id   Int?
+  item_name String? @db.VarChar(255)
+  count     Int?
+  cost      Int?
+  date      Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model bans {
+  id        Int     @id @default(autoincrement()) @db.UnsignedInt
+  type      Int     @db.UnsignedTinyInt
+  value     Int     @db.UnsignedInt
+  param     Int     @default(4294967295) @db.UnsignedInt
+  active    Boolean @default(true)
+  expires   Int
+  added     Int     @db.UnsignedInt
+  admin_id  Int     @default(0) @db.UnsignedInt
+  comment   String  @db.Text
+  reason    Int     @default(0) @db.UnsignedInt
+  action    Int     @default(0) @db.UnsignedInt
+  statement String  @default("") @db.VarChar(255)
+
+  @@index([active], map: "active")
+  @@index([type, value], map: "type")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model environment_killers {
+  kill_id Int
+  name    String  @db.VarChar(255)
+  killers killers @relation(fields: [kill_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "environment_killers_ibfk_1")
+
+  @@index([kill_id], map: "kill_id")
+  @@ignore
+}
+
+model global_storage {
+  key      String @default("0") @db.VarChar(32)
+  world_id Int    @default(0) @db.UnsignedTinyInt
+  value    String @default("0") @db.VarChar(255)
+
+  @@unique([key, world_id], map: "key")
+}
+
+model guild_invites {
+  player_id Int     @default(0)
+  guild_id  Int     @default(0)
+  players   players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_invites_ibfk_1")
+  guilds    guilds  @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_invites_ibfk_2")
+
+  @@unique([player_id, guild_id], map: "player_id")
+  @@index([guild_id], map: "guild_id")
+}
+
+model guild_kills {
+  id            Int           @id @default(autoincrement())
+  guild_id      Int
+  war_id        Int
+  death_id      Int
+  guild_wars    guild_wars    @relation(fields: [war_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_kills_ibfk_1")
+  player_deaths player_deaths @relation(fields: [death_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_kills_ibfk_2")
+  guilds        guilds        @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_kills_ibfk_3")
+
+  @@index([war_id], map: "guild_kills_ibfk_1")
+  @@index([death_id], map: "guild_kills_ibfk_2")
+  @@index([guild_id], map: "guild_kills_ibfk_3")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model guild_ranks {
+  id       Int    @id @default(autoincrement())
+  guild_id Int
+  name     String @db.VarChar(255)
+  level    Int
+  guilds   guilds @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_ranks_ibfk_1")
+
+  @@index([guild_id], map: "guild_id")
+}
+
+model guild_wars {
+  id                                 Int           @id @default(autoincrement())
+  guild_id                           Int
+  enemy_id                           Int
+  begin                              BigInt        @default(0)
+  end                                BigInt        @default(0)
+  frags                              Int           @default(0) @db.UnsignedInt
+  payment                            BigInt        @default(0) @db.UnsignedBigInt
+  guild_kills                        Int           @default(0) @db.UnsignedInt
+  enemy_kills                        Int           @default(0) @db.UnsignedInt
+  status                             Boolean       @default(false)
+  kills                              guild_kills[]
+  guilds_guild_wars_guild_idToguilds guilds        @relation("guild_wars_guild_idToguilds", fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_wars_ibfk_1")
+  guilds_guild_wars_enemy_idToguilds guilds        @relation("guild_wars_enemy_idToguilds", fields: [enemy_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "guild_wars_ibfk_2")
+
+  @@index([enemy_id], map: "enemy_id")
+  @@index([guild_id], map: "guild_id")
+  @@index([status], map: "status")
+}
+
+model guilds {
+  id                                     Int             @id @default(autoincrement())
+  world_id                               Int             @default(0) @db.UnsignedTinyInt
+  name                                   String          @db.VarChar(255)
+  ownerid                                Int
+  creationdata                           Int
+  checkdata                              Int
+  motd                                   String          @db.VarChar(255)
+  balance                                BigInt          @db.UnsignedBigInt
+  description                            String          @db.Text
+  logo_gfx_name                          String          @db.VarChar(255)
+  last_execute_points                    Int             @default(0)
+  guild_logo                             Bytes?          @db.MediumBlob
+  create_ip                              Int             @default(0)
+  guild_invites                          guild_invites[]
+  guild_kills                            guild_kills[]
+  guild_ranks                            guild_ranks[]
+  guild_wars_guild_wars_guild_idToguilds guild_wars[]    @relation("guild_wars_guild_idToguilds")
+  guild_wars_guild_wars_enemy_idToguilds guild_wars[]    @relation("guild_wars_enemy_idToguilds")
+
+  @@unique([name, world_id], map: "name")
+}
+
+model house_auctions {
+  house_id  Int     @db.UnsignedInt
+  world_id  Int     @default(0) @db.UnsignedTinyInt
+  player_id Int
+  bid       Int     @default(0) @db.UnsignedInt
+  limit     Int     @default(0) @db.UnsignedInt
+  endtime   BigInt  @default(0) @db.UnsignedBigInt
+  houses    houses  @relation(fields: [house_id, world_id], references: [id, world_id], onDelete: Cascade, onUpdate: Restrict, map: "house_auctions_ibfk_1")
+  players   players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "house_auctions_ibfk_2")
+
+  @@unique([house_id, world_id], map: "house_id")
+  @@index([player_id], map: "player_id")
+}
+
+model house_data {
+  house_id Int    @db.UnsignedInt
+  world_id Int    @default(0) @db.UnsignedTinyInt
+  data     Bytes
+  houses   houses @relation(fields: [house_id, world_id], references: [id, world_id], onDelete: Cascade, onUpdate: Restrict, map: "house_data_ibfk_1")
+
+  @@unique([house_id, world_id], map: "house_id")
+}
+
+model house_lists {
+  house_id Int    @db.UnsignedInt
+  world_id Int    @default(0) @db.UnsignedTinyInt
+  listid   Int
+  list     String @db.Text
+  houses   houses @relation(fields: [house_id, world_id], references: [id, world_id], onDelete: Cascade, onUpdate: Restrict, map: "house_lists_ibfk_1")
+
+  @@unique([house_id, world_id, listid], map: "house_id")
+}
+
+model houses {
+  id             Int             @db.UnsignedInt
+  world_id       Int             @default(0) @db.UnsignedTinyInt
+  owner          Int
+  paid           Int             @default(0) @db.UnsignedInt
+  warnings       Int             @default(0)
+  lastwarning    Int             @default(0) @db.UnsignedInt
+  name           String          @db.VarChar(255)
+  town           Int             @default(0) @db.UnsignedInt
+  size           Int             @default(0) @db.UnsignedInt
+  price          Int             @default(0) @db.UnsignedInt
+  rent           Int             @default(0) @db.UnsignedInt
+  doors          Int             @default(0) @db.UnsignedInt
+  beds           Int             @default(0) @db.UnsignedInt
+  tiles          Int             @default(0) @db.UnsignedInt
+  guild          Boolean         @default(false)
+  clear          Boolean         @default(false)
+  house_auctions house_auctions?
+  house_data     house_data?
+  house_lists    house_lists[]
+
+  @@unique([id, world_id], map: "id")
+}
+
+model killers {
+  id                  Int                   @id @default(autoincrement())
+  death_id            Int
+  final_hit           Boolean               @default(false)
+  unjustified         Boolean               @default(false)
+  war                 Int                   @default(0)
+  environment_killers environment_killers[] @ignore
+  player_deaths       player_deaths         @relation(fields: [death_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "killers_ibfk_1")
+  player_killers      player_killers[]      @ignore
+
+  @@index([death_id], map: "death_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model login_history {
+  account_id Int     @default(0)
+  player_id  Int     @default(0)
+  type       Boolean @default(false)
+  login      Boolean @default(false)
+  ip         Int     @default(0)
+  date       Int     @default(0)
+  players    players @relation(fields: [player_id], references: [id], onUpdate: Restrict, map: "login_history_ibfk_1")
+
+  @@index([player_id], map: "player_id")
+  @@ignore
+}
+
+model lottery {
+  id        Int    @id @default(autoincrement())
+  name      String @db.VarChar(255)
+  item      String @db.VarChar(255)
+  world_id  Int    @default(0) @db.UnsignedTinyInt
+  item_name String @db.VarChar(255)
+  date      String @db.VarChar(256)
+}
+
+model marriage_system {
+  id            Int    @id
+  player_id     Int
+  partner       String @db.VarChar(255)
+  marriage_date Int
+}
+
+model pagsegurotransacoes {
+  TransacaoID      String   @db.VarChar(36)
+  VendedorEmail    String   @db.VarChar(200)
+  Referencia       String?  @db.VarChar(200)
+  TipoFrete        String?  @db.Char(2)
+  ValorFrete       Decimal? @db.Decimal(10, 2)
+  Extras           Decimal? @db.Decimal(10, 2)
+  Anotacao         String?  @db.Text
+  TipoPagamento    String   @db.VarChar(50)
+  StatusTransacao  String   @db.VarChar(50)
+  CliNome          String   @db.VarChar(200)
+  CliEmail         String   @db.VarChar(200)
+  CliEndereco      String   @db.VarChar(200)
+  CliNumero        String?  @db.VarChar(10)
+  CliComplemento   String?  @db.VarChar(100)
+  CliBairro        String   @db.VarChar(100)
+  CliCidade        String   @db.VarChar(100)
+  CliEstado        String   @db.Char(2)
+  CliCEP           String   @db.VarChar(9)
+  CliTelefone      String?  @db.VarChar(14)
+  NumItens         Int
+  Data             DateTime @db.DateTime(0)
+  ProdQuantidade_x Int
+  status           Boolean  @default(false)
+
+  @@unique([TransacaoID, StatusTransacao], map: "TransacaoID")
+  @@index([Referencia], map: "Referencia")
+  @@index([status], map: "status")
+}
+
+model player_deaths {
+  id          Int           @id @default(autoincrement())
+  player_id   Int
+  date        BigInt        @db.UnsignedBigInt
+  level       Int           @db.UnsignedInt
+  unjustified Boolean       @default(false)
+  guild_kills guild_kills[]
+  killers     killers[]
+  players     players       @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_deaths_ibfk_1")
+
+  @@index([date], map: "date")
+  @@index([player_id], map: "player_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model player_depotitems {
+  player_id  Int
+  sid        Int
+  pid        Int     @default(0)
+  itemtype   Int
+  count      Int     @default(0)
+  attributes Bytes   @db.Blob
+  serial     String  @default("") @db.VarChar(255)
+  players    players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_depotitems_ibfk_1")
+
+  @@unique([player_id, sid], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+}
+
+model player_inboxitems {
+  player_id  Int     @id
+  sid        Int
+  pid        Int     @default(0)
+  itemtype   Int     @db.SmallInt
+  count      Int     @default(0) @db.SmallInt
+  attributes Bytes   @db.Blob
+  serial     String  @default("") @db.VarChar(255)
+  players    players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_inboxitems_ibfk_1")
+
+  @@unique([player_id, sid], map: "player_id")
+}
+
+model player_items {
+  player_id  Int     @default(0)
+  pid        Int     @default(0)
+  sid        Int     @default(0)
+  itemtype   Int     @default(0)
+  count      Int     @default(0)
+  attributes Bytes   @db.Blob
+  serial     String  @default("") @db.VarChar(255)
+  players    players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_items_ibfk_1")
+
+  @@unique([player_id, sid], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model player_killers {
+  kill_id   Int
+  player_id Int
+  killers   killers @relation(fields: [kill_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_killers_ibfk_1")
+  players   players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_killers_ibfk_2")
+
+  @@index([kill_id], map: "kill_id")
+  @@index([player_id], map: "player_id")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model player_namelocks {
+  player_id Int     @default(0)
+  name      String  @db.VarChar(255)
+  new_name  String  @db.VarChar(255)
+  date      BigInt  @default(0)
+  players   players @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "player_namelocks_ibfk_1")
+
+  @@index([player_id], map: "player_id")
+  @@ignore
+}
+
+model player_skills {
+  player_id Int @default(0)
+  skillid   Int @default(0) @db.TinyInt
+  value     Int @default(0) @db.UnsignedInt
+  count     Int @default(0) @db.UnsignedInt
+
+  @@unique([player_id, skillid], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+}
+
+model player_spells {
+  player_id Int
+  name      String @db.VarChar(255)
+
+  @@unique([player_id, name], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+}
+
+model player_statements {
+  id         Int    @id @default(autoincrement())
+  player_id  Int
+  channel_id Int    @default(0)
+  text       String @db.VarChar(255)
+  date       BigInt @default(0)
+
+  @@index([channel_id], map: "channel_id")
+  @@index([player_id], map: "player_id")
+}
+
+model player_storage {
+  player_id Int    @default(0)
+  key       String @default("0") @db.VarChar(32)
+  value     String @default("0") @db.VarChar(255)
+
+  @@unique([player_id, key], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+}
+
+model player_viplist {
+  player_id Int
+  vip_id    Int
+
+  @@unique([player_id, vip_id], map: "player_id_2")
+  @@index([player_id], map: "player_id")
+  @@index([vip_id], map: "vip_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model players {
+  id                    Int                 @id @default(autoincrement())
+  name                  String              @db.VarChar(255)
+  world_id              Int                 @default(0) @db.UnsignedTinyInt
+  group_id              Int                 @default(1)
+  account_id            Int                 @default(0)
+  level                 Int                 @default(1)
+  vocation              Int                 @default(0)
+  health                Int                 @default(150)
+  healthmax             Int                 @default(150)
+  experience            BigInt              @default(0)
+  lookbody              Int                 @default(0)
+  lookfeet              Int                 @default(0)
+  lookhead              Int                 @default(0)
+  looklegs              Int                 @default(0)
+  looktype              Int                 @default(136)
+  lookaddons            Int                 @default(0)
+  lookmount             Int                 @default(0)
+  maglevel              Int                 @default(0)
+  mana                  Int                 @default(0)
+  manamax               Int                 @default(0)
+  manaspent             Int                 @default(0)
+  soul                  Int                 @default(0) @db.UnsignedInt
+  town_id               Int                 @default(0)
+  posx                  Int                 @default(0)
+  posy                  Int                 @default(0)
+  posz                  Int                 @default(0)
+  conditions            Bytes               @db.Blob
+  cap                   Int                 @default(0)
+  sex                   Int                 @default(0)
+  lastlogin             BigInt              @default(0) @db.UnsignedBigInt
+  lastip                Int                 @default(0) @db.UnsignedInt
+  save                  Boolean             @default(true)
+  skull                 Boolean             @default(false)
+  skulltime             Int                 @default(0)
+  rank_id               Int                 @default(0)
+  guildnick             String              @default("") @db.VarChar(255)
+  lastlogout            BigInt              @default(0) @db.UnsignedBigInt
+  blessings             Int                 @default(0) @db.TinyInt
+  pvp_blessing          Boolean             @default(false)
+  balance               BigInt              @default(0)
+  stamina               BigInt              @default(151200000)
+  direction             Int                 @default(2)
+  loss_experience       Int                 @default(100)
+  loss_mana             Int                 @default(100)
+  loss_skills           Int                 @default(100)
+  loss_containers       Int                 @default(100)
+  loss_items            Int                 @default(100)
+  premend               Int                 @default(0)
+  online                Boolean             @default(false)
+  marriage              Int                 @default(0) @db.UnsignedInt
+  marrystatus           Int                 @default(0) @db.UnsignedInt
+  promotion             Int                 @default(0)
+  deleted               Boolean             @default(false)
+  description           String              @default("") @db.VarChar(255)
+  exphist_lastexp       BigInt              @default(0)
+  exphist1              BigInt              @default(0)
+  exphist2              BigInt              @default(0)
+  exphist3              BigInt              @default(0)
+  exphist4              BigInt              @default(0)
+  exphist5              BigInt              @default(0)
+  exphist6              BigInt              @default(0)
+  exphist7              BigInt              @default(0)
+  onlinetimetoday       BigInt              @default(0)
+  onlinetime1           BigInt              @default(0)
+  onlinetime2           BigInt              @default(0)
+  onlinetime3           BigInt              @default(0)
+  onlinetime4           BigInt              @default(0)
+  onlinetime5           BigInt              @default(0)
+  onlinetime6           BigInt              @default(0)
+  onlinetime7           BigInt              @default(0)
+  onlinetimeall         BigInt              @default(0)
+  auction_balance       Int
+  created               Int
+  nick_verify           String              @db.VarChar(5)
+  old_name              String              @default("") @db.VarChar(255)
+  hide_char             Int                 @default(0)
+  comment               String              @db.Text
+  show_outfit           Int                 @default(0)
+  show_eq               Int                 @default(0)
+  show_bars             Int                 @default(0)
+  show_skills           Int                 @default(0)
+  show_quests           Int                 @default(0)
+  stars                 Int                 @default(0)
+  create_ip             Int                 @default(0)
+  create_date           Int                 @default(0)
+  signature             String              @db.Text
+  cast                  Int                 @default(0) @db.TinyInt
+  castViewers           Int                 @default(0)
+  castDescription       String              @db.VarChar(255)
+  offlinetraining_time  Int                 @default(43200) @db.UnsignedSmallInt
+  offlinetraining_skill Int                 @default(-1)
+  broadcasting          Int?                @default(0) @db.TinyInt
+  viewers               Int?                @default(0)
+  ip                    String              @default("0") @db.VarChar(17)
+  account_viplist       account_viplist[]
+  guild_invites         guild_invites[]
+  house_auctions        house_auctions[]
+  login_history         login_history[]     @ignore
+  player_deaths         player_deaths[]
+  player_depotitems     player_depotitems[]
+  player_inboxitems     player_inboxitems?
+  player_items          player_items[]
+  player_killers        player_killers[]    @ignore
+  player_namelocks      player_namelocks[]  @ignore
+
+  @@unique([name, deleted], map: "name")
+  @@index([account_id], map: "account_id")
+  @@index([deleted], map: "deleted")
+  @@index([group_id], map: "group_id")
+  @@index([online], map: "online")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model poll_votes {
+  poll_id    Int
+  votes      String @db.VarChar(255)
+  account_id String @db.VarChar(255)
+
+  @@index([poll_id], map: "poll_id")
+  @@ignore
+}
+
+model polls {
+  id        Int    @id @default(autoincrement())
+  player_id Int
+  poll      String @db.VarChar(255)
+  options   String @db.VarChar(255)
+  timestamp Int
+
+  @@index([player_id], map: "player_id")
+}
+
+model server_config {
+  config String @unique(map: "config") @default("") @db.VarChar(35)
+  value  String @default("") @db.VarChar(255)
+}
+
+model server_motd {
+  id       Int    @db.UnsignedInt
+  world_id Int    @default(0) @db.UnsignedTinyInt
+  text     String @db.Text
+
+  @@unique([id, world_id], map: "id")
+}
+
+model server_record {
+  record    Int
+  world_id  Int    @default(0) @db.UnsignedTinyInt
+  timestamp BigInt
+
+  @@unique([record, world_id, timestamp], map: "record")
+}
+
+model server_reports {
+  id        Int    @id @default(autoincrement())
+  world_id  Int    @default(0) @db.UnsignedTinyInt
+  player_id Int    @default(1)
+  posx      Int    @default(0)
+  posy      Int    @default(0)
+  posz      Int    @default(0)
+  timestamp BigInt @default(0)
+  report    String @db.Text
+  reads     Int    @default(0)
+
+  @@index([player_id], map: "player_id")
+  @@index([reads], map: "reads")
+  @@index([world_id], map: "world_id")
+}
+
+model tile_items {
+  tile_id    Int    @db.UnsignedInt
+  world_id   Int    @default(0) @db.UnsignedTinyInt
+  sid        Int
+  pid        Int    @default(0)
+  itemtype   Int
+  count      Int    @default(0)
+  attributes Bytes  @db.Blob
+  serial     String @default("") @db.VarChar(255)
+
+  @@unique([tile_id, world_id, sid], map: "tile_id")
+  @@index([sid], map: "sid")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tile_store {
+  house_id Int   @db.UnsignedInt
+  world_id Int   @default(0) @db.UnsignedTinyInt
+  data     Bytes
+
+  @@index([house_id], map: "house_id")
+  @@ignore
+}
+
+model tiles {
+  id       Int @db.UnsignedInt
+  world_id Int @default(0) @db.UnsignedTinyInt
+  house_id Int @db.UnsignedInt
+  x        Int @db.UnsignedInt
+  y        Int @db.UnsignedInt
+  z        Int @db.UnsignedTinyInt
+
+  @@unique([id, world_id], map: "id")
+  @@index([house_id, world_id], map: "house_id")
+  @@index([x, y, z], map: "x")
+}
+
+model woe {
+  id      Int @id @unique(map: "id") @default(autoincrement())
+  started Int
+  guild   Int
+  breaker Int
+  time    Int
+}
+
+model z_changelog {
+  id          Int    @id @default(autoincrement())
+  type        String @default("") @db.VarChar(255)
+  where       String @default("") @db.VarChar(255)
+  date        Int    @default(0)
+  description String @db.VarChar(255)
+  hide        Int
+}
+
+model z_featured_article {
+  id        Int    @id @default(autoincrement())
+  title     String @db.VarChar(50)
+  text      String @db.VarChar(255)
+  date      String @db.VarChar(30)
+  author    String @db.VarChar(50)
+  read_more String @db.VarChar(100)
+}
+
+model z_forum {
+  id            Int     @id @default(autoincrement())
+  first_post    Int     @default(0)
+  last_post     Int     @default(0)
+  section       Int     @default(0)
+  replies       Int     @default(0)
+  views         Int     @default(0)
+  author_aid    Int     @default(0)
+  author_guid   Int     @default(0)
+  post_text     String  @db.Text
+  post_topic    String  @db.VarChar(255)
+  post_smile    Boolean @default(false)
+  post_date     Int     @default(0)
+  last_edit_aid Int     @default(0)
+  edit_date     Int     @default(0)
+  post_ip       String  @default("0.0.0.0") @db.VarChar(15)
+  icon_id       Int     @default(1) @db.TinyInt
+  post_icon_id  Int     @db.TinyInt
+
+  @@index([section], map: "section")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_monsters {
+  hide_creature Boolean @default(false)
+  name          String  @db.VarChar(255)
+  mana          Int
+  exp           Int
+  health        Int
+  speed_lvl     Int     @default(1)
+  use_haste     Boolean
+  voices        String  @db.Text
+  immunities    String  @db.VarChar(255)
+  summonable    Boolean
+  convinceable  Boolean
+  race          String  @db.VarChar(255)
+  gfx_name      String  @db.VarChar(255)
+
+  @@ignore
+}
+
+model z_network_box {
+  id           Int    @id @default(autoincrement())
+  network_name String @db.VarChar(10)
+  network_link String @db.VarChar(50)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_news_big {
+  hide_news Boolean @default(false)
+  date      Int     @default(0)
+  author    String  @db.VarChar(255)
+  author_id Int
+  image_id  Int     @default(0)
+  topic_df  String  @db.VarChar(255)
+  text_df   String  @db.Text
+  topic_ot  String  @db.VarChar(255)
+  text_ot   String  @db.Text
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_news_tickers {
+  date        Int     @default(1)
+  author      Int
+  image_id    Int     @default(0)
+  text        String  @db.Text
+  hide_ticker Boolean
+
+  @@ignore
+}
+
+model z_ots_comunication {
+  id        Int    @id @default(autoincrement())
+  name      String @db.VarChar(255)
+  type      String @db.VarChar(255)
+  action    String @db.VarChar(255)
+  param1    String @db.VarChar(255)
+  param2    String @db.VarChar(255)
+  param3    String @db.VarChar(255)
+  param4    String @db.VarChar(255)
+  param5    String @db.VarChar(255)
+  param6    String @db.VarChar(255)
+  param7    String @db.VarChar(255)
+  delete_it Int    @default(1)
+}
+
+model z_ots_guildcomunication {
+  id        Int    @id @default(autoincrement())
+  name      String @db.VarChar(255)
+  type      String @db.VarChar(255)
+  action    String @db.VarChar(255)
+  param1    String @db.VarChar(255)
+  param2    String @db.VarChar(255)
+  param3    String @db.VarChar(255)
+  param4    String @db.VarChar(255)
+  param5    String @db.VarChar(255)
+  param6    String @db.VarChar(255)
+  param7    String @db.VarChar(255)
+  delete_it Int    @default(1)
+}
+
+model z_polls {
+  id        Int    @id @default(autoincrement())
+  question  String @db.VarChar(255)
+  end       Int
+  start     Int
+  answers   Int
+  votes_all Int
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_polls_answers {
+  poll_id   Int
+  answer_id Int
+  answer    String @db.VarChar(255)
+  votes     Int
+
+  @@ignore
+}
+
+model z_shop_history_item {
+  id           Int    @id @default(autoincrement())
+  to_name      String @default("0") @db.VarChar(255)
+  to_account   Int    @default(0)
+  from_nick    String @db.VarChar(255)
+  from_account Int    @default(0)
+  price        Int    @default(0)
+  offer_id     String @db.VarChar(255)
+  trans_state  String @db.VarChar(255)
+  trans_start  Int    @default(0)
+  trans_real   Int    @default(0)
+}
+
+model z_shop_history_pacc {
+  id           Int    @id @default(autoincrement())
+  to_name      String @default("0") @db.VarChar(255)
+  to_account   Int    @default(0)
+  from_nick    String @db.VarChar(255)
+  from_account Int    @default(0)
+  price        Int    @default(0)
+  pacc_days    Int    @default(0)
+  trans_state  String @db.VarChar(255)
+  trans_start  Int    @default(0)
+  trans_real   Int    @default(0)
+}
+
+model z_shop_offer {
+  id                Int     @id @default(autoincrement())
+  points            Int     @default(0)
+  itemid1           Int     @default(0)
+  count1            Int     @default(0)
+  itemid2           Int     @default(0)
+  count2            Int     @default(0)
+  offer_type        String? @db.VarChar(255)
+  offer_description String  @db.Text
+  offer_name        String  @db.VarChar(255)
+  pid               Int     @default(0)
+}
+
+model z_shop_points_bought {
+  id         Int      @id @default(autoincrement())
+  amount     Int
+  type       String   @db.VarChar(255)
+  accountid  Int
+  code       String   @db.VarChar(255)
+  paypalmail String   @db.VarChar(255)
+  date       DateTime @default(now()) @db.Timestamp(0)
+}
+
+model z_shopguild_history_item {
+  id           Int    @id @default(autoincrement())
+  to_name      String @default("0") @db.VarChar(255)
+  to_account   Int    @default(0)
+  from_nick    String @db.VarChar(255)
+  from_account Int    @default(0)
+  price        Int    @default(0)
+  offer_id     Int    @default(0)
+  trans_state  String @db.VarChar(255)
+  trans_start  Int    @default(0)
+  trans_real   Int    @default(0)
+}
+
+model z_shopguild_history_pacc {
+  id           Int    @id @default(autoincrement())
+  to_name      String @default("0") @db.VarChar(255)
+  to_account   Int    @default(0)
+  from_nick    String @db.VarChar(255)
+  from_account Int    @default(0)
+  price        Int    @default(0)
+  pacc_days    Int    @default(0)
+  trans_state  String @db.VarChar(255)
+  trans_start  Int    @default(0)
+  trans_real   Int    @default(0)
+}
+
+model z_shopguild_offer {
+  id                Int     @id @default(autoincrement())
+  points            Int     @default(0)
+  itemid1           Int     @default(0)
+  count1            Int     @default(0)
+  itemid2           Int     @default(0)
+  count2            Int     @default(0)
+  offer_type        String? @db.VarChar(255)
+  offer_description String  @db.Text
+  offer_name        String  @db.VarChar(255)
+  pid               Int     @default(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model z_spells {
+  name       String @db.VarChar(255)
+  spell      String @db.VarChar(255)
+  spell_type String @db.VarChar(255)
+  mana       Int    @default(0)
+  lvl        Int    @default(0)
+  mlvl       Int    @default(0)
+  soul       Int    @default(0)
+  pacc       String @db.VarChar(255)
+  vocations  String @db.VarChar(255)
+  conj_count Int    @default(0)
+  hide_spell Int    @default(0)
+
+  @@ignore
+}
+
+model z_tracker {
+  account     String @db.VarChar(255)
+  type        Int
+  status      Int
+  text        String @db.Text
+  id          Int
+  subject     String @db.VarChar(255)
+  typetracker Int
+  tag         Int
+  priority    Int
+  reply       Int
+  who         Int
+  uid         Int    @id @default(autoincrement())
+}
+
+model za_tickers {
+  id      Int     @id @default(autoincrement())
+  message String? @db.Text
+  date    BigInt? @default(0) @db.UnsignedBigInt
+}
+
+model zaypay_payment {
+  payID      BigInt @id
+  account_id Int
+  status     String @db.VarChar(255)
+}

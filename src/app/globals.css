@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* bg-tibia.jpg */
+:root {
+  --background: #0b0806;
+  --foreground: #f5e7c9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  /*
+   * Fixed Tibia hero image at the top, fading into a dark parchment vignette.
+   * A subtle repeating texture below keeps it feeling parchment-like.
+   */
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(11, 8, 6, 0.4) 0%,
+      rgba(11, 8, 6, 0.75) 100%
+    ),
+    url("/bg-tibia.jpg");
+  background-size: auto, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: fixed, fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    /* vignette darkening edges */
+    radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+  z-index: -1;
+}
+
+/* keep rendered news HTML readable */
+.news-body,
+.news-body * {
+  color: inherit !important;
+}
+.news-body a {
+  color: #fbbf24;
+  text-decoration: underline;
+}
+.news-body b,
+.news-body strong {
+  color: #fde68a;
+}
